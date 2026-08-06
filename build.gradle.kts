@@ -25,7 +25,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-aop")
-    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
+    implementation("io.github.resilience4j:resilience4j-spring-boot4:2.4.0")
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
     implementation("io.micrometer:micrometer-tracing-bridge-brave")
     implementation("org.flywaydb:flyway-database-postgresql")
@@ -55,9 +55,5 @@ spotless {
         removeUnusedImports()
         palantirJavaFormat()
         formatAnnotations()
-    }
-    kotlinGradle {
-        target("*.gradle.kts")
-        ktlint()
     }
 }
