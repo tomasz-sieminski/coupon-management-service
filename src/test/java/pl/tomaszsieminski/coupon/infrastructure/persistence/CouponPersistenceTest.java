@@ -13,8 +13,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import pl.tomaszsieminski.coupon.TestcontainersConfiguration;
 import pl.tomaszsieminski.coupon.infrastructure.persistence.entity.CouponEntity;
 import pl.tomaszsieminski.coupon.infrastructure.persistence.entity.CouponRedemptionEntity;
-import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.CouponRedemptionRepository;
-import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.CouponRepository;
+import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.JpaCouponRedemptionRepository;
+import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.JpaCouponRepository;
 
 @DataJpaTest
 @Import(TestcontainersConfiguration.class)
@@ -22,10 +22,10 @@ import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.CouponRep
 class CouponPersistenceTest {
 
     @Autowired
-    private CouponRepository couponRepository;
+    private JpaCouponRepository couponRepository;
 
     @Autowired
-    private CouponRedemptionRepository redemptionRepository;
+    private JpaCouponRedemptionRepository redemptionRepository;
 
     @Test
     @DisplayName("Should reject duplicate coupon codes")
