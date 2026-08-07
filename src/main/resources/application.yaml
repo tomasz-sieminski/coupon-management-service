@@ -6,8 +6,8 @@ spring:
       enabled: true
   datasource:
     url: jdbc:postgresql://localhost:5432/empik_coupons
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -22,5 +22,13 @@ spring:
 
   flyway:
     enabled: true
-    baseline-on-migrate: true
     locations: classpath:db/migration
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}

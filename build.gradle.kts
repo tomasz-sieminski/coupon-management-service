@@ -53,7 +53,7 @@ spotless {
     java {
         importOrder()
         removeUnusedImports()
-        palantirJavaFormat()
+        palantirJavaFormat("2.90.0")
         formatAnnotations()
     }
 }

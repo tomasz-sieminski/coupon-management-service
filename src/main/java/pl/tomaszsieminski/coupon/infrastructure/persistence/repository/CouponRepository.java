@@ -10,10 +10,11 @@ import pl.tomaszsieminski.coupon.infrastructure.persistence.entity.CouponEntity;
 
 public interface CouponRepository extends JpaRepository<CouponEntity, UUID> {
 
-    Optional<CouponEntity> findByCodeIgnoreCase(String code);
+    @Query("SELECT c FROM CouponEntity c WHERE LOWER(c.code) = LOWER(:code)")
+    Optional<CouponEntity> findByCodeIgnoreCase(@Param("code") String code);
 
     @Modifying
     @Query(
-            "UPDATE CouponEntity c SET c.currentUses = c.currentUses + 1 WHERE UPPER(c.code) = UPPER(:code) AND c.currentUses < c.maxUses")
+            "UPDATE CouponEntity c SET c.currentUses = c.currentUses + 1 WHERE LOWER(c.code) = LOWER(:code) AND c.currentUses < c.maxUses")
     int incrementUsesIfAvailable(@Param("code") String code);
 }

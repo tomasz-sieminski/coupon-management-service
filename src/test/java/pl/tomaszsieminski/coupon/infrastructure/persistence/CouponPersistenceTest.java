@@ -52,6 +52,15 @@ class CouponPersistenceTest {
     }
 
     @Test
+    @DisplayName("Should find coupon by code regardless of case")
+    void shouldFindCouponByCodeRegardlessOfCase() {
+        CouponEntity coupon = new CouponEntity("AUTUMN", 10, "PL");
+        couponRepository.saveAndFlush(coupon);
+
+        assertThat(couponRepository.findByCodeIgnoreCase("autumn")).contains(coupon);
+    }
+
+    @Test
     @DisplayName("Should prevent the same user from redeeming the same coupon twice")
     void shouldPreventUserFromRedeemingSameCouponTwice() {
         CouponEntity coupon = new CouponEntity("LATO", 5, "PL");

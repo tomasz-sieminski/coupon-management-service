@@ -6,7 +6,7 @@ CREATE TABLE coupons
     current_uses INT                      NOT NULL DEFAULT 0,
     country_code VARCHAR(2)               NOT NULL,
     created_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CONSTRAINT ck_coupon_uses_limit CHECK (current_uses <= max_uses)
+    CONSTRAINT ck_coupon_uses_limit CHECK (max_uses >= 0 AND current_uses >= 0 AND current_uses <= max_uses)
 );
 
 CREATE UNIQUE INDEX uk_coupons_code_lower ON coupons (LOWER(code));
