@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pl.tomaszsieminski.coupon.infrastructure.persistence.entity.CouponEntity;
 
-public interface CouponRepository extends JpaRepository<CouponEntity, UUID> {
+public interface JpaCouponRepository extends JpaRepository<CouponEntity, UUID> {
 
     @Query("SELECT c FROM CouponEntity c WHERE LOWER(c.code) = LOWER(:code)")
     Optional<CouponEntity> findByCodeIgnoreCase(@Param("code") String code);

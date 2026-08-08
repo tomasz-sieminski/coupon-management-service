@@ -9,7 +9,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.context.annotation.Import;
 import pl.tomaszsieminski.coupon.TestcontainersConfiguration;
-import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.CouponRepository;
+import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.JpaCouponRepository;
 
 @DataJpaTest
 @Import(TestcontainersConfiguration.class)
@@ -17,7 +17,7 @@ import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.CouponRep
 class DatabaseSchemaTest {
 
     @Autowired
-    private CouponRepository couponRepository;
+    private JpaCouponRepository couponRepository;
 
     @Test
     @DisplayName("Should initialize Flyway migrations and validate JPA entities")
