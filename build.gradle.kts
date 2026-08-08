@@ -24,6 +24,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-restclient")
     implementation("org.springframework.boot:spring-boot-starter-aspectj")
     implementation("io.github.resilience4j:resilience4j-spring-boot4:2.4.0")
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")

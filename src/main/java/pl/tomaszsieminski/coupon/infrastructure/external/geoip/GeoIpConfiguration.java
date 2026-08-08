@@ -2,7 +2,6 @@ package pl.tomaszsieminski.coupon.infrastructure.external.geoip;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
@@ -17,12 +16,6 @@ import pl.tomaszsieminski.coupon.infrastructure.external.geoip.stub.StubGeoIpPro
 @EnableCaching
 @EnableConfigurationProperties({IpApiGeoIpProperties.class, StubGeoIpProperties.class})
 public class GeoIpConfiguration {
-
-    @Bean
-    @ConditionalOnMissingBean
-    RestClient.Builder restClientBuilder() {
-        return RestClient.builder();
-    }
 
     @Bean
     @ConditionalOnProperty(prefix = "app.geoip", name = "mode", havingValue = "external")

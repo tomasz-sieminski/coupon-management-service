@@ -18,7 +18,7 @@ public class CachedGeoIpService implements GeoIpService {
     }
 
     @Override
-    @Cacheable(value = "geoip", key = "#ipAddress")
+    @Cacheable(value = "geoip", key = "#ipAddress", unless = "#result == null")
     public Optional<String> resolveCountryCode(String ipAddress) {
         return client.fetchCountryCode(ipAddress);
     }

@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.restclient.autoconfigure.RestClientAutoConfiguration;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.cache.CacheManager;
@@ -27,6 +29,7 @@ class GeoIpConfigurationTest {
     };
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(RestClientAutoConfiguration.class))
             .withUserConfiguration(
                     GeoIpConfiguration.class,
                     CachedGeoIpService.class,
@@ -79,6 +82,25 @@ class GeoIpConfigurationTest {
                     assertThat(geoIpService.resolveCountryCode("1.1.1.1")).contains("AU");
 
                     verify(client, times(1)).fetchCountryCode("1.1.1.1");
+                });
+    }
+
+    @Test
+    @DisplayName("Should not cache empty GeoIP provider responses")
+    void shouldNotCacheEmptyGeoIpProviderResponses() {
+        IpApiGeoIpClient client = mock(IpApiGeoIpClient.class);
+        when(client.fetchCountryCode("8.8.8.8")).thenReturn(Optional.empty());
+
+        contextRunner
+                .withBean(IpApiGeoIpClient.class, () -> client)
+                .withPropertyValues(EXTERNAL_GEOIP_PROPERTIES)
+                .run(context -> {
+                    GeoIpService geoIpService = context.getBean(GeoIpService.class);
+
+                    assertThat(geoIpService.resolveCountryCode("8.8.8.8")).isEmpty();
+                    assertThat(geoIpService.resolveCountryCode("8.8.8.8")).isEmpty();
+
+                    verify(client, times(2)).fetchCountryCode("8.8.8.8");
                 });
     }
 
