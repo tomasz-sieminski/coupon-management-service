@@ -24,12 +24,15 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-restclient")
     implementation("org.springframework.boot:spring-boot-starter-aspectj")
     implementation("io.github.resilience4j:resilience4j-spring-boot4:2.4.0")
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
     implementation("io.micrometer:micrometer-tracing-bridge-brave")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ben-manes.caffeine:caffeine")
 
     runtimeOnly("org.postgresql:postgresql")
 
