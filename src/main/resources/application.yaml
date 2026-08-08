@@ -24,11 +24,33 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
----
-spring:
-  config:
-    activate:
-      on-profile: local
-  datasource:
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=24h
+
+resilience4j:
+  retry:
+    instances:
+      geoIpProvider:
+        max-attempts: 3
+        wait-duration: 100ms
+
+  circuitbreaker:
+    instances:
+      geoIpProvider:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+
+app:
+  geoip:
+    mode: external
+    external:
+      base-url: https://ipapi.co
+      connect-timeout-ms: 500
+      read-timeout-ms: 1000
+    stub:
+      country-code: PL
+
