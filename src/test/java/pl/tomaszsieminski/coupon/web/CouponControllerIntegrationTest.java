@@ -78,6 +78,21 @@ class CouponControllerIntegrationTest extends FullStackIntegrationTestSupport {
     }
 
     @Test
+    @DisplayName("Should reject non-ISO country code")
+    void shouldRejectNonIsoCountryCode() throws Exception {
+        CreateCouponRequest request = new CreateCouponRequest("VALID", 1, "ZZ");
+
+        ResponseEntity<String> response = restTemplate.postForEntity("/api/v1/coupons", request, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.path("title").asText()).isEqualTo("Validation Failed");
+        assertThat(body.path("errors").findValuesAsText("field")).contains("countryCode");
+        assertThat(body.path("errors").findValuesAsText("message"))
+                .contains("Country code must be an ISO 3166-1 alpha-2 country code");
+    }
+
+    @Test
     @DisplayName("Should reject duplicate coupon code")
     void shouldRejectDuplicateCouponCode() throws Exception {
         givenCoupon("DUPLICATE", 5, "PL");

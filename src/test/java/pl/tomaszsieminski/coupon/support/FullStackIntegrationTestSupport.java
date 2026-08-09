@@ -12,7 +12,13 @@ import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.JpaCoupon
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = {"app.geoip.mode=stub", "app.geoip.stub.country-code=PL"})
+        properties = {
+            "app.geoip.mode=stub",
+            "app.geoip.stub.country-code=PL",
+            "app.web.trusted-proxies[0]=127.0.0.1",
+            "app.web.trusted-proxies[1]=::1",
+            "app.web.trusted-proxies[2]=0:0:0:0:0:0:0:1"
+        })
 @AutoConfigureTestRestTemplate
 @Import(TestcontainersConfiguration.class)
 public abstract class FullStackIntegrationTestSupport {

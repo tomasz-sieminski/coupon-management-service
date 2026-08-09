@@ -24,9 +24,11 @@ import pl.tomaszsieminski.coupon.web.dto.RedeemCouponRequest;
 public class CouponController {
 
     private final CouponService couponService;
+    private final ClientIpResolver clientIpResolver;
 
-    public CouponController(CouponService couponService) {
+    public CouponController(CouponService couponService, ClientIpResolver clientIpResolver) {
         this.couponService = couponService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @PostMapping
@@ -45,17 +47,10 @@ public class CouponController {
             @RequestHeader(value = "X-Forwarded-For", required = false) String xForwardedFor,
             HttpServletRequest servletRequest) {
 
-        String clientIp = extractClientIp(xForwardedFor, servletRequest);
+        String clientIp = clientIpResolver.resolve(xForwardedFor, servletRequest.getRemoteAddr());
 
         couponService.redeemCoupon(code, request.userId(), clientIp);
 
         return ResponseEntity.noContent().build();
-    }
-
-    private String extractClientIp(String xForwardedFor, HttpServletRequest request) {
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
     }
 }

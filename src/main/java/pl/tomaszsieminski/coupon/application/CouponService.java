@@ -1,5 +1,6 @@
 package pl.tomaszsieminski.coupon.application;
 
+import java.util.Locale;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.tomaszsieminski.coupon.application.port.out.CouponRepository;
@@ -23,7 +24,7 @@ public class CouponService {
 
     @Transactional
     public Coupon createCoupon(String code, int maxUses, String countryCode) {
-        Coupon coupon = new Coupon(null, code, maxUses, 0, countryCode.toUpperCase());
+        Coupon coupon = new Coupon(null, code, maxUses, 0, countryCode.toUpperCase(Locale.ROOT));
         return couponRepository.save(coupon);
     }
 
