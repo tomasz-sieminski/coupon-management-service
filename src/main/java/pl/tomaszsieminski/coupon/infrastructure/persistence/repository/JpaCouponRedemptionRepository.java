@@ -4,4 +4,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import pl.tomaszsieminski.coupon.infrastructure.persistence.entity.CouponRedemptionEntity;
 
-public interface JpaCouponRedemptionRepository extends JpaRepository<CouponRedemptionEntity, UUID> {}
+public interface JpaCouponRedemptionRepository extends JpaRepository<CouponRedemptionEntity, UUID> {
+
+    boolean existsByCoupon_IdAndUserId(UUID couponId, String userId);
+}

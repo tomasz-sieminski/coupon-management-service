@@ -19,7 +19,7 @@ Use `app.geoip.mode` directly in `@ConditionalOnProperty` and do not introduce a
 
 Provider-specific settings remain strongly typed:
 
-- `IpApiGeoIpProperties` for the external provider
+- `IpWhoIsGeoIpProperties` for the external provider
 - `StubGeoIpProperties` for the stub implementation
 
 ## Consequences

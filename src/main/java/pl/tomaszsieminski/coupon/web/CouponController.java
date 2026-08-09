@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.net.URI;
+import org.slf4j.MDC;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,7 +50,10 @@ public class CouponController {
 
         String clientIp = clientIpResolver.resolve(xForwardedFor, servletRequest.getRemoteAddr());
 
-        couponService.redeemCoupon(code, request.userId(), clientIp);
+        try (MDC.MDCCloseable ignoredUserId = MDC.putCloseable("userId", request.userId());
+                MDC.MDCCloseable ignoredCouponCode = MDC.putCloseable("couponCode", code)) {
+            couponService.redeemCoupon(code, request.userId(), clientIp);
+        }
 
         return ResponseEntity.noContent().build();
     }

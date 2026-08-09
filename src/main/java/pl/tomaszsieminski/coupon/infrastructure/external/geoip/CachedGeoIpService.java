@@ -5,15 +5,15 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import pl.tomaszsieminski.coupon.application.port.out.GeoIpService;
-import pl.tomaszsieminski.coupon.infrastructure.external.geoip.provider.IpApiGeoIpClient;
+import pl.tomaszsieminski.coupon.infrastructure.external.geoip.provider.IpWhoIsGeoIpClient;
 
 @Service
 @ConditionalOnProperty(prefix = "app.geoip", name = "mode", havingValue = "external")
 public class CachedGeoIpService implements GeoIpService {
 
-    private final IpApiGeoIpClient client;
+    private final IpWhoIsGeoIpClient client;
 
-    public CachedGeoIpService(IpApiGeoIpClient client) {
+    public CachedGeoIpService(IpWhoIsGeoIpClient client) {
         this.client = client;
     }
 

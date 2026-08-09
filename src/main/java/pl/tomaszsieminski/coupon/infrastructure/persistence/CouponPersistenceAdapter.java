@@ -49,6 +49,10 @@ public class CouponPersistenceAdapter implements CouponRepository {
 
     @Override
     public void saveRedemption(Coupon coupon, String userId) {
+        if (redemptionRepository.existsByCoupon_IdAndUserId(coupon.id(), userId)) {
+            throw new UserAlreadyUsedCouponException(userId, coupon.code());
+        }
+
         try {
             CouponEntity couponReference = couponRepository.getReferenceById(coupon.id());
             redemptionRepository.saveAndFlush(new CouponRedemptionEntity(couponReference, userId));

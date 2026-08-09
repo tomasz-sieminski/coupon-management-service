@@ -156,6 +156,27 @@ class CouponControllerIntegrationTest extends FullStackIntegrationTestSupport {
         assertThat(redemptionRepository.count()).isZero();
     }
 
+    @Test
+    @DisplayName("Should expose business redemption metrics in Prometheus format")
+    void shouldExposeBusinessRedemptionMetricsInPrometheusFormat() {
+        givenCoupon("METRICS", 2, "PL");
+        HttpEntity<RedeemCouponRequest> firstRequest =
+                new HttpEntity<>(new RedeemCouponRequest("user-1"), jsonHeaders(CLIENT_IP));
+        HttpEntity<RedeemCouponRequest> secondRequest =
+                new HttpEntity<>(new RedeemCouponRequest("user-1"), jsonHeaders(CLIENT_IP));
+
+        restTemplate.postForEntity("/api/v1/coupons/METRICS/redeem", firstRequest, Void.class);
+        restTemplate.postForEntity("/api/v1/coupons/METRICS/redeem", secondRequest, String.class);
+
+        ResponseEntity<String> response = restTemplate.getForEntity("/actuator/prometheus", String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("coupon_redemptions_total");
+        assertThat(response.getBody()).contains("outcome=\"success\"");
+        assertThat(response.getBody()).contains("outcome=\"failure\"");
+        assertThat(response.getBody()).contains("reason=\"UserAlreadyUsedCouponException\"");
+    }
+
     private HttpHeaders jsonHeaders(String xForwardedFor) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

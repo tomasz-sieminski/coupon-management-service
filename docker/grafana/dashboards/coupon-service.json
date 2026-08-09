@@ -1,0 +1,627 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (uri, status) (rate(http_server_requests_seconds_count{application=\"coupon\",uri!~\"/actuator.*\",uri!=\"UNKNOWN\"}[1m]))",
+          "legendFormat": "{{uri}} {{status}}",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP requests",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "1000 * histogram_quantile(0.95, sum by (le, uri) (rate(http_server_requests_seconds_bucket{application=\"coupon\",uri!~\"/actuator.*\",uri!=\"UNKNOWN\"}[1m])))",
+          "legendFormat": "p95 {{uri}}",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP p95 latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (outcome, reason) (increase(coupon_redemptions_total[1m]))",
+          "legendFormat": "{{outcome}} {{reason}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Coupon redemptions",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (area) (jvm_memory_used_bytes{application=\"coupon\"})",
+          "legendFormat": "{{area}}",
+          "refId": "A"
+        }
+      ],
+      "title": "JVM memory used",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (cache, result) (rate(cache_gets_total{application=\"coupon\"}[1m]))",
+          "legendFormat": "{{cache}} {{result}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Cache hit/miss rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "max": 1,
+          "min": 0,
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(cache_gets_total{application=\"coupon\",result=\"hit\"}[1m])) / sum(rate(cache_gets_total{application=\"coupon\"}[1m]))",
+          "legendFormat": "hit rate",
+          "refId": "A"
+        }
+      ],
+      "title": "Cache hit rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (pool) (hikaricp_connections_active{application=\"coupon\"})",
+          "legendFormat": "active {{pool}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (pool) (hikaricp_connections_idle{application=\"coupon\"})",
+          "legendFormat": "idle {{pool}}",
+          "refId": "B"
+        },
+        {
+          "expr": "sum by (pool) (hikaricp_connections_pending{application=\"coupon\"})",
+          "legendFormat": "pending {{pool}}",
+          "refId": "C"
+        }
+      ],
+      "title": "DB connection pool usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "1000 * sum(rate(hikaricp_connections_acquire_seconds_sum{application=\"coupon\"}[1m])) / sum(rate(hikaricp_connections_acquire_seconds_count{application=\"coupon\"}[1m]))",
+          "legendFormat": "connection acquire avg",
+          "refId": "A"
+        },
+        {
+          "expr": "1000 * sum(rate(hikaricp_connections_usage_seconds_sum{application=\"coupon\"}[1m])) / sum(rate(hikaricp_connections_usage_seconds_count{application=\"coupon\"}[1m]))",
+          "legendFormat": "connection usage avg",
+          "refId": "B"
+        },
+        {
+          "expr": "1000 * max(hikaricp_connections_usage_seconds_max{application=\"coupon\"})",
+          "legendFormat": "connection usage max",
+          "refId": "C"
+        }
+      ],
+      "title": "DB pool response times",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (repository, method, state) (rate(spring_data_repository_invocations_seconds_count{application=\"coupon\"}[1m]))",
+          "legendFormat": "{{repository}}.{{method}} {{state}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Repository command rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "1000 * sum by (repository, method, state) (rate(spring_data_repository_invocations_seconds_sum{application=\"coupon\"}[1m])) / sum by (repository, method, state) (rate(spring_data_repository_invocations_seconds_count{application=\"coupon\"}[1m]))",
+          "legendFormat": "{{repository}}.{{method}} {{state}} avg",
+          "refId": "A"
+        },
+        {
+          "expr": "1000 * max by (repository, method, state) (spring_data_repository_invocations_seconds_max{application=\"coupon\"})",
+          "legendFormat": "{{repository}}.{{method}} {{state}} max",
+          "refId": "B"
+        }
+      ],
+      "title": "Repository command response times",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(pg_stat_database_xact_commit{datname=\"empik_coupons\"}[1m])",
+          "legendFormat": "commits",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(pg_stat_database_xact_rollback{datname=\"empik_coupons\"}[1m])",
+          "legendFormat": "rollbacks",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(pg_stat_database_tup_inserted{datname=\"empik_coupons\"}[1m])",
+          "legendFormat": "rows inserted",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(pg_stat_database_tup_updated{datname=\"empik_coupons\"}[1m])",
+          "legendFormat": "rows updated",
+          "refId": "D"
+        }
+      ],
+      "title": "PostgreSQL database load",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pg_stat_database_numbackends{datname=\"empik_coupons\"}",
+          "legendFormat": "active backends",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(pg_stat_database_deadlocks{datname=\"empik_coupons\"}[1m])",
+          "legendFormat": "deadlocks/s",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(pg_stat_database_blks_read{datname=\"empik_coupons\"}[1m])",
+          "legendFormat": "blocks read/s",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(pg_stat_database_blks_hit{datname=\"empik_coupons\"}[1m])",
+          "legendFormat": "blocks hit/s",
+          "refId": "D"
+        }
+      ],
+      "title": "PostgreSQL activity",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "max": 1,
+          "min": 0,
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 48
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(pg_stat_database_blks_hit{datname=\"empik_coupons\"}[1m])) / (sum(rate(pg_stat_database_blks_hit{datname=\"empik_coupons\"}[1m])) + sum(rate(pg_stat_database_blks_read{datname=\"empik_coupons\"}[1m])))",
+          "legendFormat": "buffer cache hit ratio",
+          "refId": "A"
+        }
+      ],
+      "title": "PostgreSQL cache hit ratio",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 48
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "scrape_duration_seconds{job=\"postgres\"}",
+          "legendFormat": "postgres exporter scrape {{instance}}",
+          "refId": "A"
+        },
+        {
+          "expr": "scrape_duration_seconds{job=\"coupon-service\"}",
+          "legendFormat": "app scrape {{instance}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Prometheus scrape response time",
+      "type": "timeseries"
+    }
+  ],
+  "preload": false,
+  "refresh": "5s",
+  "schemaVersion": 40,
+  "tags": [
+    "coupon",
+    "load-test"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Coupon Service Load Test",
+  "uid": "coupon-service-load-test",
+  "version": 1,
+  "weekStart": ""
+}

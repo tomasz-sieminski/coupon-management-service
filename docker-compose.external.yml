@@ -1,0 +1,17 @@
+services:
+  app1:
+    environment: &external-app-environment
+      SPRING_APPLICATION_JSON: >
+        {
+          "app": {
+            "geoip": {
+              "mode": "external"
+            },
+            "web": {
+              "trusted-proxies": ["172.28.0.0/16"]
+            }
+          }
+        }
+
+  app2:
+    environment: *external-app-environment
