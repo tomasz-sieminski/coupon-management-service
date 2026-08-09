@@ -6,6 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
 import pl.tomaszsieminski.coupon.application.port.out.CouponRepository;
 import pl.tomaszsieminski.coupon.domain.Coupon;
+import pl.tomaszsieminski.coupon.domain.exception.CouponAlreadyExistsException;
 import pl.tomaszsieminski.coupon.domain.exception.UserAlreadyUsedCouponException;
 import pl.tomaszsieminski.coupon.infrastructure.persistence.entity.CouponEntity;
 import pl.tomaszsieminski.coupon.infrastructure.persistence.entity.CouponRedemptionEntity;
@@ -16,6 +17,7 @@ import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.JpaCoupon
 public class CouponPersistenceAdapter implements CouponRepository {
 
     private static final String DUPLICATE_REDEMPTION_CONSTRAINT = "uk_coupon_user";
+    private static final String DUPLICATE_COUPON_CODE_CONSTRAINT = "uk_coupons_code_lower";
 
     private final JpaCouponRepository couponRepository;
     private final JpaCouponRedemptionRepository redemptionRepository;
@@ -24,6 +26,20 @@ public class CouponPersistenceAdapter implements CouponRepository {
             JpaCouponRepository couponRepository, JpaCouponRedemptionRepository redemptionRepository) {
         this.couponRepository = couponRepository;
         this.redemptionRepository = redemptionRepository;
+    }
+
+    @Override
+    public Coupon save(Coupon coupon) {
+        try {
+            CouponEntity saved = couponRepository.saveAndFlush(
+                    new CouponEntity(coupon.code(), coupon.maxUses(), coupon.countryCode()));
+            return toDomain(saved);
+        } catch (DataIntegrityViolationException exception) {
+            if (isNotConstraintViolation(exception, DUPLICATE_COUPON_CODE_CONSTRAINT)) {
+                throw exception;
+            }
+            throw new CouponAlreadyExistsException(coupon.code());
+        }
     }
 
     @Override
@@ -37,7 +53,7 @@ public class CouponPersistenceAdapter implements CouponRepository {
             CouponEntity couponReference = couponRepository.getReferenceById(coupon.id());
             redemptionRepository.saveAndFlush(new CouponRedemptionEntity(couponReference, userId));
         } catch (DataIntegrityViolationException exception) {
-            if (!isDuplicateRedemptionViolation(exception)) {
+            if (isNotConstraintViolation(exception, DUPLICATE_REDEMPTION_CONSTRAINT)) {
                 throw exception;
             }
             throw new UserAlreadyUsedCouponException(userId, coupon.code());
@@ -58,15 +74,15 @@ public class CouponPersistenceAdapter implements CouponRepository {
                 entity.getCountryCode());
     }
 
-    private boolean isDuplicateRedemptionViolation(Throwable throwable) {
+    private boolean isNotConstraintViolation(Throwable throwable, String constraintName) {
         Throwable current = throwable;
         while (current != null) {
             if (current instanceof ConstraintViolationException constraintViolationException
-                    && DUPLICATE_REDEMPTION_CONSTRAINT.equals(constraintViolationException.getConstraintName())) {
-                return true;
+                    && constraintName.equals(constraintViolationException.getConstraintName())) {
+                return false;
             }
             current = current.getCause();
         }
-        return false;
+        return true;
     }
 }

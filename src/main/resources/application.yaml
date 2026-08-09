@@ -45,6 +45,9 @@ resilience4j:
         wait-duration-in-open-state: 10s
 
 app:
+  web:
+    # Trust X-Forwarded-For only from proxies that strip and replace this header.
+    trusted-proxies: []
   geoip:
     mode: external
     external:

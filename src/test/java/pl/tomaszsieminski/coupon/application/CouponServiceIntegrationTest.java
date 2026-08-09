@@ -10,54 +10,35 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import pl.tomaszsieminski.coupon.TestcontainersConfiguration;
 import pl.tomaszsieminski.coupon.domain.exception.CouponExhaustedException;
 import pl.tomaszsieminski.coupon.domain.exception.CouponNotFoundException;
 import pl.tomaszsieminski.coupon.domain.exception.UserAlreadyUsedCouponException;
 import pl.tomaszsieminski.coupon.infrastructure.persistence.entity.CouponEntity;
-import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.JpaCouponRedemptionRepository;
-import pl.tomaszsieminski.coupon.infrastructure.persistence.repository.JpaCouponRepository;
+import pl.tomaszsieminski.coupon.support.FullStackIntegrationTestSupport;
 
-@SpringBootTest
-@Import(TestcontainersConfiguration.class)
-class CouponServiceIntegrationTest {
+class CouponServiceIntegrationTest extends FullStackIntegrationTestSupport {
 
     @Autowired
     private CouponService couponService;
 
-    @Autowired
-    private JpaCouponRepository couponRepository;
-
-    @Autowired
-    private JpaCouponRedemptionRepository redemptionRepository;
-
-    @BeforeEach
-    void cleanDatabase() {
-        redemptionRepository.deleteAll();
-        couponRepository.deleteAll();
-    }
-
     @Test
     @DisplayName("Should reject redemption when coupon does not exist")
     void shouldRejectRedemptionWhenCouponDoesNotExist() {
-        assertThatThrownBy(() -> couponService.redeemCoupon("UNKNOWN", "user-1"))
+        assertThatThrownBy(() -> couponService.redeemCoupon("UNKNOWN", "user-1", CLIENT_IP))
                 .isInstanceOf(CouponNotFoundException.class);
     }
 
     @Test
     @DisplayName("Should reject second redemption by the same user")
     void shouldRejectSecondRedemptionByTheSameUser() {
-        couponRepository.saveAndFlush(new CouponEntity("ONCE", 5, "PL"));
+        givenCoupon("ONCE", 5, "PL");
 
-        couponService.redeemCoupon("once", "user-1");
+        couponService.redeemCoupon("once", "user-1", CLIENT_IP);
 
-        assertThatThrownBy(() -> couponService.redeemCoupon("ONCE", "user-1"))
+        assertThatThrownBy(() -> couponService.redeemCoupon("ONCE", "user-1", CLIENT_IP))
                 .isInstanceOf(UserAlreadyUsedCouponException.class);
 
         CouponEntity coupon = couponRepository.findByCodeIgnoreCase("ONCE").orElseThrow();
@@ -68,11 +49,11 @@ class CouponServiceIntegrationTest {
     @Test
     @DisplayName("Should reject redemption when coupon usage limit is reached")
     void shouldRejectRedemptionWhenCouponUsageLimitIsReached() {
-        couponRepository.saveAndFlush(new CouponEntity("LIMIT", 1, "PL"));
+        givenCoupon("LIMIT", 1, "PL");
 
-        couponService.redeemCoupon("limit", "user-1");
+        couponService.redeemCoupon("limit", "user-1", CLIENT_IP);
 
-        assertThatThrownBy(() -> couponService.redeemCoupon("LIMIT", "user-2"))
+        assertThatThrownBy(() -> couponService.redeemCoupon("LIMIT", "user-2", CLIENT_IP))
                 .isInstanceOf(CouponExhaustedException.class);
 
         CouponEntity coupon = couponRepository.findByCodeIgnoreCase("LIMIT").orElseThrow();
@@ -85,7 +66,7 @@ class CouponServiceIntegrationTest {
     void shouldNotExceedCouponUsageLimitUnderConcurrentRedemptions() throws InterruptedException, ExecutionException {
         int maxUses = 10;
         int attempts = 50;
-        couponRepository.saveAndFlush(new CouponEntity("FLASH", maxUses, "PL"));
+        givenCoupon("FLASH", maxUses, "PL");
 
         CountDownLatch ready = new CountDownLatch(attempts);
         CountDownLatch start = new CountDownLatch(1);
@@ -121,7 +102,7 @@ class CouponServiceIntegrationTest {
         start.await();
 
         try {
-            couponService.redeemCoupon("flash", "user-" + index);
+            couponService.redeemCoupon("flash", "user-" + index, CLIENT_IP);
             return true;
         } catch (CouponExhaustedException exception) {
             return false;
