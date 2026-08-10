@@ -1,87 +1,91 @@
 # Coupon Service
 
-REST API do tworzenia i realizowania kuponów z limitem użyć, walidacją kraju użytkownika przez GeoIP oraz metrykami Prometheus/Grafana.
+REST API for creating and redeeming discount coupons with usage limits, country validation via GeoIP, and Prometheus/Grafana observability.
 
-## Wymagania
+## Quick Start
 
-- Java 25
-- Docker i Docker Compose
-- PowerShell
+### Development
 
-## Uruchomienie w normalnym trybie
+The fastest feedback loop — runs the application locally with only PostgreSQL in Docker:
 
-Normalny tryb aplikacji używa realnego zewnętrznego GeoIP providera (`ipwho.is`). Najprościej uruchomić bazę w Dockerze, a aplikację lokalnie przez Gradle.
-
-Najpierw uruchom PostgreSQL:
-
-```powershell
+```bash
 docker compose up -d postgres
+./gradlew bootRun
 ```
 
-Potem uruchom aplikację:
+The application starts on `http://localhost:8080` with external GeoIP (`ipwho.is`) and no trusted proxies.
 
-```powershell
-$env:DB_USERNAME = "postgres"
-$env:DB_PASSWORD = "postgres"
-$env:SPRING_APPLICATION_JSON = '{"app":{"web":{"trusted-proxies":["127.0.0.1","::1"]}}}'
-.\gradlew.bat bootRun
+To trust local loopback addresses for `X-Forwarded-For` testing:
+
+```bash
+SPRING_APPLICATION_JSON='{"app":{"web":{"trusted-proxies":["127.0.0.1","::1"]}}}' ./gradlew bootRun
 ```
 
-Domyślne ustawienia z `application.yaml`:
+### Docker — production-like (1 instance + monitoring)
 
-- baza: `jdbc:postgresql://127.0.0.1:5432/empik_coupons`
-- GeoIP mode: `external`
-- GeoIP provider: `https://ipwho.is`
-- API: `http://127.0.0.1:8080`
-
-`SPRING_APPLICATION_JSON` w przykładzie ufa lokalnym adresom loopback (`127.0.0.1`, `::1`) jako proxy tylko po to, żeby lokalnie można było testować `X-Forwarded-For`. W środowisku z realnym reverse proxy ustaw tam adres albo CIDR tego proxy.
-
-Endpointy:
-
-- Swagger UI: `http://127.0.0.1:8080/swagger-ui.html`
-- OpenAPI JSON: `http://127.0.0.1:8080/v3/api-docs`
-- Health: `http://127.0.0.1:8080/actuator/health`
-- Prometheus metrics: `http://127.0.0.1:8080/actuator/prometheus`
-
-## Metryki
-
-Metryki aplikacji są dostępne bezpośrednio z Actuatora:
-
-```powershell
-Invoke-WebRequest http://127.0.0.1:8080/actuator/prometheus
+```bash
+./run.sh prod
 ```
 
-Dashboardy Grafany i stack load-testowy są opisane osobno w [docs/load-testing.md](docs/load-testing.md). Tamten tryb uruchamia dodatkowe kontenery, w tym Prometheusa, Grafanę, PostgreSQL exporter, Nginx i dwie instancje aplikacji.
+| Endpoint | URL |
+|----------|-----|
+| API | http://localhost:8080 |
+| Swagger UI | http://localhost:8080/swagger-ui.html |
+| Grafana | http://localhost:3000 (admin / admin) |
+| Prometheus | http://localhost:9090 |
 
-Jeśli chcesz używać Grafany dla lokalnego `bootRun`, dodaj osobny target Prometheusa wskazujący na `host.docker.internal:8080/actuator/prometheus`.
+GeoIP mode: `external` (`ipwho.is`, 1000 req/day limit per client IP).
 
-## Korzystanie z API
+### Docker — load testing (2 instances + Nginx + monitoring)
 
-Przykłady używają natywnych komend PowerShell. To omija problemy z cytowaniem JSON-a w `curl.exe` na Windows.
+```bash
+# Start the stack
+./run.sh load-test
 
-### Utworzenie kuponu
+# Open Grafana, then run k6
+./run.sh k6
 
-```powershell
-$body = @{
-  code = "WELCOME"
-  maxUses = 5
-  countryCode = "US"
-} | ConvertTo-Json -Compress
-
-Invoke-WebRequest `
-  -Method Post `
-  -Uri http://127.0.0.1:8080/api/v1/coupons `
-  -ContentType "application/json" `
-  -Body $body
+# Optional: override coupon limit
+./run.sh k6 COUPON_MAX_USES=500
 ```
 
-Oczekiwany wynik: `201 Created`.
+Uses stub GeoIP with deterministic IP → country mappings (no external calls).
 
-Przykładowa odpowiedź:
+To run with real GeoIP provider instead:
+
+```bash
+./run.sh load-test-external
+./run.sh k6
+```
+
+See [docs/load-testing.md](docs/load-testing.md) for full load testing documentation.
+
+### Stop everything
+
+```bash
+./run.sh down
+```
+
+## API
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/coupons` | Create a coupon |
+| `POST` | `/api/v1/coupons/{code}/redeem` | Redeem a coupon |
+
+### Create a coupon
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/coupons \
+  -H "Content-Type: application/json" \
+  -d '{"code": "WELCOME", "maxUses": 5, "countryCode": "US"}' | jq
+```
+
+Response `201 Created`:
 
 ```json
 {
-  "id": "uuid",
+  "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
   "code": "WELCOME",
   "maxUses": 5,
   "currentUses": 0,
@@ -89,80 +93,57 @@ Przykładowa odpowiedź:
 }
 ```
 
-### Realizacja kuponu
+### Redeem a coupon
 
-Przykład redeem z publicznym IP Google DNS, które GeoIP provider powinien rozpoznać jako USA:
-
-```powershell
-$body = @{
-  userId = "user-1"
-} | ConvertTo-Json -Compress
-
-Invoke-WebRequest `
-  -Method Post `
-  -Uri http://127.0.0.1:8080/api/v1/coupons/WELCOME/redeem `
-  -ContentType "application/json" `
-  -Headers @{ "X-Forwarded-For" = "8.8.8.8" } `
-  -Body $body
+```bash
+curl -s -X POST http://localhost:8080/api/v1/coupons/WELCOME/redeem \
+  -H "Content-Type: application/json" \
+  -H "X-Forwarded-For: 8.8.8.8" \
+  -d '{"userId": "user-1"}'
 ```
 
-Oczekiwany wynik dla kuponu `countryCode="US"`: `204 No Content`.
+Response `204 No Content` on success.
 
-Analogiczny test IPv6:
+The country is resolved from the client IP using GeoIP. The header `X-Forwarded-For` is trusted only from proxies listed in `app.web.trusted-proxies`.
 
-```powershell
-Invoke-WebRequest `
-  -Method Post `
-  -Uri http://127.0.0.1:8080/api/v1/coupons/WELCOME/redeem `
-  -ContentType "application/json" `
-  -Headers @{ "X-Forwarded-For" = "2001:4860:4860::8888" } `
-  -Body (@{ userId = "user-ipv6" } | ConvertTo-Json -Compress)
-```
+### Response codes
 
-## Typowe odpowiedzi API
+| Status | Meaning |
+|--------|---------|
+| `201 Created` | Coupon created |
+| `204 No Content` | Coupon redeemed successfully |
+| `400 Bad Request` | Validation failed |
+| `403 Forbidden` | Client country does not match coupon country |
+| `404 Not Found` | Coupon not found |
+| `409 Conflict` | User already redeemed this coupon |
+| `422 Unprocessable Content` | Coupon usage limit reached |
+| `503 Service Unavailable` | GeoIP country resolution failed |
 
-- `201 Created` — kupon utworzony.
-- `204 No Content` — kupon zrealizowany.
-- `400 Bad Request` — niepoprawny JSON albo walidacja requestu.
-- `403 Forbidden` — kraj klienta nie pasuje do kraju kuponu.
-- `404 Not Found` — kupon nie istnieje.
-- `409 Conflict` — ten sam użytkownik wykorzystał już kupon.
-- `422 Unprocessable Content` — kupon osiągnął limit użyć.
-- `503 Service Unavailable` — nie udało się rozpoznać kraju przez GeoIP.
+## Architecture Decisions
 
-## GeoIP external
+Documented in [`docs/adr/`](docs/adr/):
 
-Normalny tryb aplikacji to `app.geoip.mode=external`. W tym trybie kraj jest pobierany z `ipwho.is`. Domyślny tryb w `application.yaml` to `external`.
+| ADR | Decision |
+|-----|----------|
+| [0001](docs/adr/0001-use-hexagonal-architecture.md) | Hexagonal architecture — domain and application isolated from infrastructure |
+| [0002](docs/adr/0002-use-spring-mvc-jpa-and-virtual-threads.md) | Spring MVC + JPA + virtual threads — blocking I/O, simple imperative model |
+| [0003](docs/adr/0003-use-flyway-for-database-schema-management.md) | Flyway for schema management — versioned migrations, `ddl-auto=validate` |
+| [0004](docs/adr/0004-use-postgresql-for-coupon-consistency.md) | PostgreSQL as consistency boundary — atomic SQL updates, DB-enforced constraints |
+| [0005](docs/adr/0005-use-testcontainers-for-persistence-tests.md) | Testcontainers — tests run against real PostgreSQL |
+| [0006](docs/adr/0006-use-github-actions-and-spotless-for-quality-gates.md) | GitHub Actions + Spotless — CI on every push, automated formatting |
+| [0007](docs/adr/0007-use-resilience4j-and-caffeine-for-geoip.md) | Resilience4j + Caffeine — retry, circuit breaker, and caching for GeoIP |
+| [0008](docs/adr/0008-geoip-mode-property.md) | GeoIP adapter selection — `app.geoip.mode` switches between `external` and `stub` |
 
-Aplikacja odpytuje provider tylko o pola `success,country_code,message`, bo do logiki kuponów potrzebny jest wyłącznie dwuliterowy kod kraju. `ipwho.is` obsługuje IPv4 i IPv6. Darmowy endpoint ma limit 1000 requestów dziennie na IP klienta.
+## AI Assistance
 
-W trybie `external` odpowiedzi GeoIP są cache’owane w cache `geoip`. Metryki cache możesz sprawdzić tak:
+This project was developed with LLM assistance (Gemini Flash, Gemini Pro, GPT-5.5).
 
-```powershell
-(Invoke-WebRequest http://127.0.0.1:8080/actuator/prometheus).Content | Select-String "cache_gets_total"
-```
+AI was used as a discussion partner, reviewer, and for scaffolding:
+- Architecture and design discussions (hexagonal layout, concurrency strategy)
+- Technology research for tools I hadn't used before (k6, Spotless, CodeRabbit)
+- Breaking down the project into issues and verifying task decomposition
+- Code review and debugging of my implementations
+- Generating boilerplate code (entity mappings, configuration classes, Docker/CI setup)
+- Generating k6 load test scripts (technology was new to me; reviewed and adapted based on Gatling experience)
 
-Przykładowe metryki:
-
-```text
-cache_gets_total{application="coupon",cache="geoip",...,result="miss"} 1.0
-cache_gets_total{application="coupon",cache="geoip",...,result="hit"} 1.0
-```
-
-Pierwsze sprawdzenie danego IP powinno zwiększyć `miss`, kolejne sprawdzenia tego samego IP powinny zwiększać `hit`.
-
-Jeśli redeem w trybie `external` zwraca `503 Service Unavailable`, sprawdź metryki klienta HTTP:
-
-```powershell
-(Invoke-WebRequest http://127.0.0.1:8080/actuator/prometheus).Content | Select-String "http_client_requests_seconds"
-```
-
-Status `429` przy `client_name="ipwho.is"` oznacza limit po stronie zewnętrznego GeoIP providera. Wtedy aplikacja działa poprawnie technicznie: wywołuje realny provider, ale provider odmawia odpowiedzi i aplikacja zwraca `503`.
-
-## Testy i formatowanie
-
-```powershell
-.\gradlew.bat test
-.\gradlew.bat spotlessApply
-```
-
+All architectural decisions, design trade-offs, and final code are my own.
