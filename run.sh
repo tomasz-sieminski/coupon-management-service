@@ -4,14 +4,15 @@ set -euo pipefail
 COMPOSE_CMD="docker compose"
 
 usage() {
-  echo "Usage: ./run.sh {prod|load-test|load-test-external|k6 [KEY=VALUE...]|down}"
+  echo "Usage: ./run.sh {prod|load-test|load-test-external|k6 [KEY=VALUE...]|restart|down}"
   echo ""
   echo "  prod                  Start 1 app instance with external GeoIP + monitoring"
   echo "  load-test             Start 2 app instances with stub GeoIP + Nginx + monitoring"
   echo "  load-test-external    Same as load-test but with external GeoIP provider"
   echo "  k6 [KEY=VALUE...]     Run k6 load test against the running load-test stack"
   echo "                        Example: ./run.sh k6 COUPON_MAX_USES=500"
-  echo "  down                  Stop and remove all containers"
+  echo "  restart               Recreate app containers without removing volumes"
+  echo "  down                  Stop and remove all containers and volumes (deletes DB data)"
 }
 
 case "${1:-help}" in
@@ -61,6 +62,10 @@ case "${1:-help}" in
       env_args+=(-e "$arg")
     done
     $COMPOSE_CMD --profile k6 run --rm "${env_args[@]}" k6
+    ;;
+
+  restart)
+    $COMPOSE_CMD --profile prod --profile load-test up --build --force-recreate -d
     ;;
 
   down)

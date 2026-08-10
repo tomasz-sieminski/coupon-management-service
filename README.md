@@ -98,13 +98,27 @@ Response `201 Created`:
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/coupons/WELCOME/redeem \
   -H "Content-Type: application/json" \
-  -H "X-Forwarded-For: 8.8.8.8" \
   -d '{"userId": "user-1"}'
 ```
 
 Response `204 No Content` on success.
 
-The country is resolved from the client IP using GeoIP. The header `X-Forwarded-For` is trusted only from proxies listed in `app.web.trusted-proxies`.
+The country is resolved from the client IP via GeoIP. In the example above, the application uses the direct connection IP (`127.0.0.1`), which most GeoIP providers cannot resolve to a country — this will return `503`. To test country validation locally, start the application with trusted proxy configuration so the `X-Forwarded-For` header is respected:
+
+```bash
+SPRING_APPLICATION_JSON='{"app":{"web":{"trusted-proxies":["127.0.0.1","::1"]}}}' ./gradlew bootRun
+```
+
+Then pass the header explicitly:
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/coupons/WELCOME/redeem \
+  -H "Content-Type: application/json" \
+  -H "X-Forwarded-For: 8.8.8.8" \
+  -d '{"userId": "user-1"}'
+```
+
+The `X-Forwarded-For` header is trusted only from proxies listed in `app.web.trusted-proxies`.
 
 ### Response codes
 

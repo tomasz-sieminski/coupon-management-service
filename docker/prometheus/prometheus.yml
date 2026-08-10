@@ -6,6 +6,8 @@ scrape_configs:
     metrics_path: /actuator/prometheus
     static_configs:
       - targets:
+          # prod profile: app is UP, app1/app2 are DOWN (expected)
+          # load-test profile: app1/app2 are UP, app is DOWN (expected)
           - app:8080
           - app1:8080
           - app2:8080

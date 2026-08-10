@@ -10,12 +10,13 @@
 ./run.sh load-test-external
 ```
 
-After changing application or Docker Compose configuration, restart the app containers before running k6:
+After changing application or Docker Compose configuration, recreate the app containers before running k6:
 
 ```bash
-./run.sh down
-./run.sh load-test
+./run.sh restart
 ```
+
+> **Note:** `./run.sh down` removes all containers **and volumes**, which deletes PostgreSQL data. Use it only for a full teardown. Use `./run.sh restart` to recreate containers while keeping data.
 
 Available endpoints once the stack is up:
 
@@ -80,7 +81,7 @@ This makes country scenarios deterministic without calling an external provider.
 
 ## Business metrics
 
-```
+```promql
 coupon_redemptions_total{outcome="success", reason="none"}
 coupon_redemptions_total{outcome="failure", reason="<ExceptionClass>"}
 ```
@@ -89,7 +90,7 @@ coupon_redemptions_total{outcome="failure", reason="<ExceptionClass>"}
 
 Caffeine cache statistics require `recordStats` in the cache spec (enabled in `application.yaml`):
 
-```
+```promql
 cache_gets_total{cache="geoip", result="hit"}
 cache_gets_total{cache="geoip", result="miss"}
 ```
@@ -122,8 +123,7 @@ The Nginx config in `docker/nginx/default.conf` preserves an incoming `X-Forward
 **Country scenario shows many `unexpected_redemption_response`:** Recreate the app containers — old containers may still use a single-country stub:
 
 ```bash
-./run.sh down
-./run.sh load-test
+./run.sh restart
 ```
 
 **GeoIP 503 in external mode:** The `ipwho.is` free tier has a 1000 req/day limit per client IP. Check cache metrics for hit/miss ratio. If the limit is exceeded, switch to `./run.sh load-test` (stub mode).
