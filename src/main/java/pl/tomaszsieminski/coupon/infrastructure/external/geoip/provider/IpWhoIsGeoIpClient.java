@@ -10,21 +10,30 @@ import org.springframework.web.client.RestClient;
 
 @Component
 @ConditionalOnProperty(prefix = "app.geoip", name = "mode", havingValue = "external")
-public class IpApiGeoIpClient {
+public class IpWhoIsGeoIpClient {
 
     private final RestClient restClient;
 
-    public IpApiGeoIpClient(RestClient ipApiRestClient) {
-        this.restClient = ipApiRestClient;
+    public IpWhoIsGeoIpClient(RestClient ipWhoIsRestClient) {
+        this.restClient = ipWhoIsRestClient;
     }
 
     @CircuitBreaker(name = "geoIpProvider", fallbackMethod = "fallbackCountryCode")
     @Retry(name = "geoIpProvider")
     public Optional<String> fetchCountryCode(String ipAddress) {
-        GeoIpResponse response =
-                restClient.get().uri("/{ip}/json/", ipAddress).retrieve().body(GeoIpResponse.class);
+        GeoIpResponse response = restClient
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .pathSegment(ipAddress)
+                        .queryParam("fields", "success,country_code,message")
+                        .build())
+                .retrieve()
+                .body(GeoIpResponse.class);
 
-        return Optional.ofNullable(response).map(GeoIpResponse::countryCode);
+        return Optional.ofNullable(response)
+                .filter(GeoIpResponse::success)
+                .map(GeoIpResponse::countryCode)
+                .filter(countryCode -> !countryCode.isBlank());
     }
 
     private Optional<String> fallbackCountryCode(String ipAddress, Throwable throwable) {
@@ -32,5 +41,5 @@ public class IpApiGeoIpClient {
     }
 
     private record GeoIpResponse(
-            @JsonProperty("country_code") String countryCode) {}
+            boolean success, @JsonProperty("country_code") String countryCode, String message) {}
 }

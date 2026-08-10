@@ -9,17 +9,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
-import pl.tomaszsieminski.coupon.infrastructure.external.geoip.provider.IpApiGeoIpProperties;
+import pl.tomaszsieminski.coupon.infrastructure.external.geoip.provider.IpWhoIsGeoIpProperties;
 import pl.tomaszsieminski.coupon.infrastructure.external.geoip.stub.StubGeoIpProperties;
 
 @Configuration(proxyBeanMethods = false)
 @EnableCaching
-@EnableConfigurationProperties({IpApiGeoIpProperties.class, StubGeoIpProperties.class})
+@EnableConfigurationProperties({IpWhoIsGeoIpProperties.class, StubGeoIpProperties.class})
 public class GeoIpConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix = "app.geoip", name = "mode", havingValue = "external")
-    RestClient ipApiRestClient(RestClient.Builder builder, IpApiGeoIpProperties properties) {
+    RestClient ipWhoIsRestClient(RestClient.Builder builder, IpWhoIsGeoIpProperties properties) {
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(properties.connectTimeoutMs()))
                 .build();

@@ -17,13 +17,13 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import pl.tomaszsieminski.coupon.application.port.out.GeoIpService;
-import pl.tomaszsieminski.coupon.infrastructure.external.geoip.provider.IpApiGeoIpClient;
+import pl.tomaszsieminski.coupon.infrastructure.external.geoip.provider.IpWhoIsGeoIpClient;
 
 class GeoIpConfigurationTest {
 
     private static final String[] EXTERNAL_GEOIP_PROPERTIES = {
         "app.geoip.mode=external",
-        "app.geoip.external.base-url=https://ipapi.co",
+        "app.geoip.external.base-url=https://ipwho.is",
         "app.geoip.external.connect-timeout-ms=500",
         "app.geoip.external.read-timeout-ms=1000"
     };
@@ -52,12 +52,28 @@ class GeoIpConfigurationTest {
     }
 
     @Test
+    @DisplayName("Should resolve stub GeoIP country by IP address before using default country")
+    void shouldResolveStubGeoIpCountryByIpAddressBeforeUsingDefaultCountry() {
+        contextRunner
+                .withPropertyValues(
+                        "app.geoip.mode=stub",
+                        "app.geoip.stub.country-code=PL",
+                        "app.geoip.stub.country-by-ip[198.51.100.20]=DE")
+                .run(context -> {
+                    GeoIpService geoIpService = context.getBean(GeoIpService.class);
+
+                    assertThat(geoIpService.resolveCountryCode("198.51.100.20")).contains("DE");
+                    assertThat(geoIpService.resolveCountryCode("203.0.113.10")).contains("PL");
+                });
+    }
+
+    @Test
     @DisplayName("Should use cached GeoIP service when external mode is configured")
     void shouldUseCachedGeoIpServiceWhenExternalModeIsConfigured() {
-        IpApiGeoIpClient client = mock(IpApiGeoIpClient.class);
+        IpWhoIsGeoIpClient client = mock(IpWhoIsGeoIpClient.class);
 
         contextRunner
-                .withBean(IpApiGeoIpClient.class, () -> client)
+                .withBean(IpWhoIsGeoIpClient.class, () -> client)
                 .withPropertyValues(EXTERNAL_GEOIP_PROPERTIES)
                 .run(context -> {
                     assertThat(context).hasSingleBean(GeoIpService.class);
@@ -69,11 +85,11 @@ class GeoIpConfigurationTest {
     @Test
     @DisplayName("Should cache GeoIP provider responses")
     void shouldCacheGeoIpProviderResponses() {
-        IpApiGeoIpClient client = mock(IpApiGeoIpClient.class);
+        IpWhoIsGeoIpClient client = mock(IpWhoIsGeoIpClient.class);
         when(client.fetchCountryCode("1.1.1.1")).thenReturn(Optional.of("AU"));
 
         contextRunner
-                .withBean(IpApiGeoIpClient.class, () -> client)
+                .withBean(IpWhoIsGeoIpClient.class, () -> client)
                 .withPropertyValues(EXTERNAL_GEOIP_PROPERTIES)
                 .run(context -> {
                     GeoIpService geoIpService = context.getBean(GeoIpService.class);
@@ -88,11 +104,11 @@ class GeoIpConfigurationTest {
     @Test
     @DisplayName("Should not cache empty GeoIP provider responses")
     void shouldNotCacheEmptyGeoIpProviderResponses() {
-        IpApiGeoIpClient client = mock(IpApiGeoIpClient.class);
+        IpWhoIsGeoIpClient client = mock(IpWhoIsGeoIpClient.class);
         when(client.fetchCountryCode("8.8.8.8")).thenReturn(Optional.empty());
 
         contextRunner
-                .withBean(IpApiGeoIpClient.class, () -> client)
+                .withBean(IpWhoIsGeoIpClient.class, () -> client)
                 .withPropertyValues(EXTERNAL_GEOIP_PROPERTIES)
                 .run(context -> {
                     GeoIpService geoIpService = context.getBean(GeoIpService.class);

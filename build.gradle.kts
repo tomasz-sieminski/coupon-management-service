@@ -33,6 +33,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("com.github.ben-manes.caffeine:caffeine")
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
     runtimeOnly("org.postgresql:postgresql")
 

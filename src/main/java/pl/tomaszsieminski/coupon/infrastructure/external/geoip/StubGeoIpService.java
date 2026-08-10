@@ -18,6 +18,10 @@ public class StubGeoIpService implements GeoIpService {
 
     @Override
     public Optional<String> resolveCountryCode(String ipAddress) {
+        String countryCode = properties.countryByIp().get(ipAddress);
+        if (countryCode != null) {
+            return Optional.of(countryCode);
+        }
         return Optional.ofNullable(properties.countryCode());
     }
 }
