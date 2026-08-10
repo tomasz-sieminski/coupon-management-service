@@ -13,7 +13,11 @@
 After changing application or Docker Compose configuration, recreate the app containers before running k6:
 
 ```bash
+# Default: recreates load-test stack (app1, app2, nginx)
 ./run.sh restart
+
+# Recreate prod stack instead
+./run.sh restart prod
 ```
 
 > **Note:** `./run.sh down` removes all containers **and volumes**, which deletes PostgreSQL data. Use it only for a full teardown. Use `./run.sh restart` to recreate containers while keeping data.

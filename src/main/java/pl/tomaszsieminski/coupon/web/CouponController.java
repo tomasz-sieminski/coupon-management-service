@@ -61,13 +61,13 @@ public class CouponController {
 
         String clientIp = clientIpResolver.resolve(xForwardedFor, servletRequest.getRemoteAddr());
 
-        String userCountryCode = geoIpService
-                .resolveCountryCode(clientIp)
-                .orElseThrow(() -> new GeoIpCountryResolutionException(clientIp));
-
         try (MDC.MDCCloseable ignoredUserId = MDC.putCloseable("userId", request.userId());
                 MDC.MDCCloseable ignoredCouponCode = MDC.putCloseable("couponCode", code)) {
             try {
+                String userCountryCode = geoIpService
+                        .resolveCountryCode(clientIp)
+                        .orElseThrow(() -> new GeoIpCountryResolutionException(clientIp));
+
                 couponService.redeemCoupon(code, request.userId(), userCountryCode);
                 couponMetrics.recordSuccessfulRedemption();
             } catch (RuntimeException exception) {
