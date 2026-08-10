@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.tomaszsieminski.coupon.application.CouponMetrics;
 import pl.tomaszsieminski.coupon.application.CouponService;
+import pl.tomaszsieminski.coupon.application.port.out.GeoIpService;
 import pl.tomaszsieminski.coupon.domain.Coupon;
+import pl.tomaszsieminski.coupon.domain.exception.GeoIpCountryResolutionException;
 import pl.tomaszsieminski.coupon.web.dto.CouponResponse;
 import pl.tomaszsieminski.coupon.web.dto.CreateCouponRequest;
 import pl.tomaszsieminski.coupon.web.dto.RedeemCouponRequest;
@@ -28,12 +30,17 @@ public class CouponController {
     private final CouponService couponService;
     private final CouponMetrics couponMetrics;
     private final ClientIpResolver clientIpResolver;
+    private final GeoIpService geoIpService;
 
     public CouponController(
-            CouponService couponService, CouponMetrics couponMetrics, ClientIpResolver clientIpResolver) {
+            CouponService couponService,
+            CouponMetrics couponMetrics,
+            ClientIpResolver clientIpResolver,
+            GeoIpService geoIpService) {
         this.couponService = couponService;
         this.couponMetrics = couponMetrics;
         this.clientIpResolver = clientIpResolver;
+        this.geoIpService = geoIpService;
     }
 
     @PostMapping
@@ -54,10 +61,14 @@ public class CouponController {
 
         String clientIp = clientIpResolver.resolve(xForwardedFor, servletRequest.getRemoteAddr());
 
+        String userCountryCode = geoIpService
+                .resolveCountryCode(clientIp)
+                .orElseThrow(() -> new GeoIpCountryResolutionException(clientIp));
+
         try (MDC.MDCCloseable ignoredUserId = MDC.putCloseable("userId", request.userId());
                 MDC.MDCCloseable ignoredCouponCode = MDC.putCloseable("couponCode", code)) {
             try {
-                couponService.redeemCoupon(code, request.userId(), clientIp);
+                couponService.redeemCoupon(code, request.userId(), userCountryCode);
                 couponMetrics.recordSuccessfulRedemption();
             } catch (RuntimeException exception) {
                 couponMetrics.recordFailedRedemption(exception);

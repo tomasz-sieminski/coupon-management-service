@@ -13,7 +13,7 @@ public interface JpaCouponRepository extends JpaRepository<CouponEntity, UUID> {
     @Query("SELECT c FROM CouponEntity c WHERE LOWER(c.code) = LOWER(:code)")
     Optional<CouponEntity> findByCodeIgnoreCase(@Param("code") String code);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query(
             "UPDATE CouponEntity c SET c.currentUses = c.currentUses + 1 WHERE LOWER(c.code) = LOWER(:code) AND c.currentUses < c.maxUses")
     int incrementUsesIfAvailable(@Param("code") String code);

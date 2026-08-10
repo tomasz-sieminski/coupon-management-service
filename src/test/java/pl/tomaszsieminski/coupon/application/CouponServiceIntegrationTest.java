@@ -27,7 +27,7 @@ class CouponServiceIntegrationTest extends FullStackIntegrationTestSupport {
     @Test
     @DisplayName("Should reject redemption when coupon does not exist")
     void shouldRejectRedemptionWhenCouponDoesNotExist() {
-        assertThatThrownBy(() -> couponService.redeemCoupon("UNKNOWN", "user-1", CLIENT_IP))
+        assertThatThrownBy(() -> couponService.redeemCoupon("UNKNOWN", "user-1", "PL"))
                 .isInstanceOf(CouponNotFoundException.class);
     }
 
@@ -36,9 +36,9 @@ class CouponServiceIntegrationTest extends FullStackIntegrationTestSupport {
     void shouldRejectSecondRedemptionByTheSameUser() {
         givenCoupon("ONCE", 5, "PL");
 
-        couponService.redeemCoupon("once", "user-1", CLIENT_IP);
+        couponService.redeemCoupon("once", "user-1", "PL");
 
-        assertThatThrownBy(() -> couponService.redeemCoupon("ONCE", "user-1", CLIENT_IP))
+        assertThatThrownBy(() -> couponService.redeemCoupon("ONCE", "user-1", "PL"))
                 .isInstanceOf(UserAlreadyUsedCouponException.class);
 
         CouponEntity coupon = couponRepository.findByCodeIgnoreCase("ONCE").orElseThrow();
@@ -51,9 +51,9 @@ class CouponServiceIntegrationTest extends FullStackIntegrationTestSupport {
     void shouldRejectRedemptionWhenCouponUsageLimitIsReached() {
         givenCoupon("LIMIT", 1, "PL");
 
-        couponService.redeemCoupon("limit", "user-1", CLIENT_IP);
+        couponService.redeemCoupon("limit", "user-1", "PL");
 
-        assertThatThrownBy(() -> couponService.redeemCoupon("LIMIT", "user-2", CLIENT_IP))
+        assertThatThrownBy(() -> couponService.redeemCoupon("LIMIT", "user-2", "PL"))
                 .isInstanceOf(CouponExhaustedException.class);
 
         CouponEntity coupon = couponRepository.findByCodeIgnoreCase("LIMIT").orElseThrow();
@@ -102,7 +102,7 @@ class CouponServiceIntegrationTest extends FullStackIntegrationTestSupport {
         start.await();
 
         try {
-            couponService.redeemCoupon("flash", "user-" + index, CLIENT_IP);
+            couponService.redeemCoupon("flash", "user-" + index, "PL");
             return true;
         } catch (CouponExhaustedException exception) {
             return false;
