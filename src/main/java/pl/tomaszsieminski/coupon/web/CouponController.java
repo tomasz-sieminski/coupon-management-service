@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import pl.tomaszsieminski.coupon.application.CouponMetrics;
 import pl.tomaszsieminski.coupon.application.CouponService;
 import pl.tomaszsieminski.coupon.domain.Coupon;
 import pl.tomaszsieminski.coupon.web.dto.CouponResponse;
@@ -25,10 +26,13 @@ import pl.tomaszsieminski.coupon.web.dto.RedeemCouponRequest;
 public class CouponController {
 
     private final CouponService couponService;
+    private final CouponMetrics couponMetrics;
     private final ClientIpResolver clientIpResolver;
 
-    public CouponController(CouponService couponService, ClientIpResolver clientIpResolver) {
+    public CouponController(
+            CouponService couponService, CouponMetrics couponMetrics, ClientIpResolver clientIpResolver) {
         this.couponService = couponService;
+        this.couponMetrics = couponMetrics;
         this.clientIpResolver = clientIpResolver;
     }
 
@@ -52,7 +56,13 @@ public class CouponController {
 
         try (MDC.MDCCloseable ignoredUserId = MDC.putCloseable("userId", request.userId());
                 MDC.MDCCloseable ignoredCouponCode = MDC.putCloseable("couponCode", code)) {
-            couponService.redeemCoupon(code, request.userId(), clientIp);
+            try {
+                couponService.redeemCoupon(code, request.userId(), clientIp);
+                couponMetrics.recordSuccessfulRedemption();
+            } catch (RuntimeException exception) {
+                couponMetrics.recordFailedRedemption(exception);
+                throw exception;
+            }
         }
 
         return ResponseEntity.noContent().build();

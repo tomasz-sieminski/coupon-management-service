@@ -1,6 +1,7 @@
 package pl.tomaszsieminski.coupon.infrastructure.external.geoip.provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 class IpWhoIsGeoIpClientTest {
@@ -70,12 +72,12 @@ class IpWhoIsGeoIpClientTest {
     }
 
     @Test
-    void shouldReturnEmptyForProviderHttpError() {
+    void shouldThrowOnProviderHttpErrorSoResilience4jCanRetryAndFallback() {
         server.expect(once(), this::assertCountryCodeRequest)
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS));
 
-        assertThat(client.fetchCountryCode("8.8.8.8")).isEmpty();
+        assertThatThrownBy(() -> client.fetchCountryCode("8.8.8.8")).isInstanceOf(HttpClientErrorException.class);
 
         server.verify();
     }

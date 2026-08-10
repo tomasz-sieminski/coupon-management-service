@@ -306,7 +306,8 @@ function htmlReport(summary) {
     summary.duplicateRejectedCount > 0 &&
     summary.unknownCouponRejectedCount > 0 &&
     summary.invalidRequestRejectedCount > 0 &&
-    summary.unexpectedCount === 0;
+    summary.unexpectedCount === 0 &&
+    summary.scenarioHttpFailedRate < 0.01;
 
   return `<!doctype html>
 <html lang="en">
