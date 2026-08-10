@@ -1,5 +1,6 @@
 package pl.tomaszsieminski.coupon.web;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -54,9 +55,11 @@ public class CouponController {
 
     @PostMapping("/{code}/redeem")
     public ResponseEntity<Void> redeemCoupon(
-            @PathVariable @NotBlank(message = "Coupon code cannot be blank") String code,
+            @Parameter(example = "WELCOME") @PathVariable @NotBlank(message = "Coupon code cannot be blank")
+                    String code,
             @Valid @RequestBody RedeemCouponRequest request,
-            @RequestHeader(value = "X-Forwarded-For", required = false) String xForwardedFor,
+            @Parameter(example = "8.8.8.8") @RequestHeader(value = "X-Forwarded-For", required = false)
+                    String xForwardedFor,
             HttpServletRequest servletRequest) {
 
         String clientIp = clientIpResolver.resolve(xForwardedFor, servletRequest.getRemoteAddr());

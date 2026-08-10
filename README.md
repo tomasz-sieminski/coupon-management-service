@@ -2,6 +2,15 @@
 
 REST API for creating and redeeming discount coupons with usage limits, country validation via GeoIP, and Prometheus/Grafana observability.
 
+## Requirements
+
+- Java 25
+- Git
+- Docker and Docker Compose
+- Bash shell (for `./run.sh` scripts)
+  - **macOS / Linux:** built-in terminal
+  - **Windows:** [Git Bash](https://git-scm.com/downloads)
+
 ## Quick Start
 
 ### Development
